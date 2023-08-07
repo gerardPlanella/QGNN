@@ -1,0 +1,30 @@
+name: egnn_lspe_cpu
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10.6
+  - pip=22.2.2
+  - cpuonly=2.0
+  - pytorch=1.13.0
+  - torchvision=0.14.0
+  - torchaudio=0.13.0
+  - pip:
+    - tensorboard==2.10.1
+    - tabulate>=0.8.9
+    - tqdm>=4.62.3
+    - pillow>=8.0.1
+    - notebook>=6.4.5
+    - jupyterlab>=3.2.1
+    - matplotlib>=3.4.3
+    - seaborn>=0.11.2
+    - ipywidgets>=7.6.5
+    - torch-sparse==0.6.17
+    - torch-cluster==1.6.0
+    - torch_geometric==2.3.0
+    - torch-scatter==2.1.1
+    - brotli
+    - wandb
+    - rdkit
+    

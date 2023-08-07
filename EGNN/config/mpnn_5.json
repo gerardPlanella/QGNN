@@ -1,0 +1,18 @@
+{
+    "model": "mpnn",
+    "dataset": "qm9",
+    "pe": "rw",
+    "pe_dim": 24,
+    "lspe": true,
+    "seed": 42,
+    "epochs": 1000,
+    "batch_size": 96,
+    "learning_rate": 0.0005,
+    "weight_decay": 1e-16,
+    "in_channels": 11,
+    "hidden_channels": 128,
+    "num_layers": 4,
+    "out_channels": 1,
+    "include_dist": false,
+    "reduced": false
+}

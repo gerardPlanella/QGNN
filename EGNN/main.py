@@ -67,12 +67,6 @@ def parse_options():
                         help='Available models: egnn | mpnn ')
     parser.add_argument('--dataset', type=str, default='qm9', metavar='S',
                         help='Available datasets: qm9 | qm9_fc')
-    parser.add_argument('--pe', type=str, default='nope', metavar='S',
-                        help='Available PEs: nope | rw | lap')
-    parser.add_argument('--pe_dim', type=int, default=24, metavar='N',
-                        help='PE dimension')
-    parser.add_argument('--lspe', action='store_true',
-                        help='Whether or not to use LSPE framework. (default: False)')
     parser.add_argument('--seed', type=int, default=42, metavar='N',
                         help='Random seed')
     parser.add_argument('--epochs', type=int, default=1000, metavar='N',
@@ -98,11 +92,6 @@ def parse_options():
     parser.add_argument('--include_dist', action='store_true',
                         help='Whether or not to include distance '
                              'in the message state. (default: False)')
-    parser.add_argument('--reduced', action='store_true',
-                        help='Whether or not to used the reduced version. (default: False)')
-    parser.add_argument('--update_with_pe', action='store_true',
-                        help='Whether or not to include pe '
-                             'in the update network. (default: False)')
 
     args = parser.parse_args()
 
@@ -178,9 +167,6 @@ def get_model(model_name):
     if model_name == 'egnn':
         from models.egnn import EGNN
         return EGNN
-    elif model_name == 'mpnn':
-        from models.mpnn import MPNN
-        return MPNN
     else:
         raise NotImplementedError(f'Model name {model_name} not recognized.')
 
@@ -221,14 +207,11 @@ def main(args):
         'fc': 'fc' in args.dataset,
         'num_params': num_params
     }
-    run_name = f'{args.model}_{args.dataset}_{args.pe}{args.pe_dim if args.pe != "nope" else ""}' \
-               f'_{"yes-lspe" if args.lspe else "no-lspe"}_{"yes-dist" if args.include_dist else "no-dist"}' \
-               f'_{"yes-reduced" if args.reduced else "no-reduced"}' \
-               f'_{"yes-update_with_pe" if args.update_with_pe else "no-update_with_pe"}' \
+    run_name = f'{args.model}_{args.dataset}' \
                f'_epochs-{args.epochs}_num_layers-{args.num_layers}'
 
     # Initialize the wandb run
-    wandb.init(project="dl2-modularized-exp", entity="dl2-gnn-lspe", config=config, reinit=True,
+    wandb.init(project="qgnn-benchmark-exp", entity="qgnn-gnn-benchmark", config=config, reinit=True,
                name=run_name)
     wandb.watch(model)
 

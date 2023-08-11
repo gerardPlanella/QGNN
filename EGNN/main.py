@@ -13,9 +13,8 @@ import argparse
 from tqdm import tqdm
 from pprint import pprint
 from torch_geometric.loader import DataLoader
-from torch_geometric.datasets import QM9
+from dataset.isingModel import IsingModelDataset
 from train import train, evaluate
-from torch_geometric.transforms import RadiusGraph, AddRandomWalkPE, AddLaplacianEigenvectorPE, Compose
 
 # Plotting via wandb
 import wandb
@@ -63,20 +62,21 @@ def parse_options():
                              'of the path specified here. No need to specify the directory.')
 
     # General Training parameters
-    parser.add_argument('--model', type=str, default='mpnn', metavar='S',
+    parser.add_argument('--model', type=str, default='egnn', metavar='S',
                         help='Available models: egnn | mpnn ')
-    parser.add_argument('--dataset', type=str, default='qm9', metavar='S',
-                        help='Available datasets: qm9 | qm9_fc')
+    parser.add_argument('--dataset', type=str, default='IsingModel', metavar='S',
+                        help='Available datasets: IsingModel')
     parser.add_argument('--seed', type=int, default=42, metavar='N',
                         help='Random seed')
-    parser.add_argument('--epochs', type=int, default=1000, metavar='N',
+    parser.add_argument('--epochs', type=int, default=1, metavar='N',
                         help='Number of epochs to train')
-    parser.add_argument('--batch_size', type=int, default=96, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=12, metavar='N',
                         help='Batch size for training')
     parser.add_argument('--learning_rate', type=float, default=5e-4, metavar='N',
                         help='Learning rate')
     parser.add_argument('--weight_decay', type=float, default=1e-16, metavar='N',
                         help='clamp the output of the coords function if get too large')
+    
 
     # Network specific parameters
     parser.add_argument('--in_channels', type=int, default=11, metavar='N',
@@ -125,41 +125,36 @@ def parse_options():
     return args
 
 
-def split_qm9(dataset):
-    """Splits the QM9 dataset into train, val, and test sets."""
-    n_train, n_test = 100000, 110000
-    train_dataset = dataset[:n_train]
-    test_dataset = dataset[n_train:n_test]
-    val_dataset = dataset[n_test:]
+
+def get_dataset(root_path, dataset_name, system_size):
+    if dataset_name == "IsingModel":
+        return IsingModelDataset(root=root_path, data_file=f"nk_{system_size}.npy")
+
+
+def split_dataset(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
+    dataset_size = len(dataset)
+    assert (test_ratio + val_ratio + train_ratio == 1.0)
+
+    # Calculate the number of samples for each split
+    num_train = int(dataset_size * train_ratio)
+    num_val = int(dataset_size * val_ratio)
+    num_test = dataset_size - num_train - num_val
+    
+    # Create a list of indices to shuffle the dataset
+    indices = np.arange(dataset_size)
+    np.random.shuffle(indices)
+    
+    # Split the dataset using the shuffled indices
+    train_indices, remaining_indices = indices[:num_train], indices[num_train:]
+    val_indices, test_indices = remaining_indices[:num_val], remaining_indices[num_val:]
+    
+    # Create train, val, and test subsets using list indexing
+    train_dataset = [dataset[i] for i in train_indices]
+    val_dataset = [dataset[i] for i in val_indices]
+    test_dataset = [dataset[i] for i in test_indices]
+    
     return train_dataset, val_dataset, test_dataset
 
-
-def get_pe(pe_name, pe_dim):
-    """Gets the corresponding PE method."""
-    if 'rw' in pe_name.lower():
-        return AddRandomWalkPE(pe_dim)
-    elif 'lap' in pe_name.lower():
-        # todo: processing doesn't work for lap ?
-        return AddLaplacianEigenvectorPE(pe_dim)
-    elif 'nope' in pe_name.lower():
-        return None
-    else:
-        raise NotImplementedError(f"PE method \"{pe_name}\" not implemented.")
-
-
-def get_dataset(dataset_name, pe_name, pe_dim):
-    """Gets the corresponding QM9 dataset.
-    Dependencies with which data can be loaded:
-        torch-cluster==1.6.0, torch-geometric==2.3.0, torch-scatter==1.3.1, torch-sparse==0.6.13, torch==1.13.1"""
-    transform = Compose([])
-    if 'fc' in dataset_name.lower():
-        transform.transforms.append(RadiusGraph(1e6))
-    elif 'nope' not in pe_name.lower():
-        transform.transforms.append(get_pe(pe_name, pe_dim))
-    # In the case of NOPE, we still use the PE processed dataset,
-    #  but we don't include PE in computation
-    data_path = os.path.join(script_dir, 'data')
-    return QM9(f'{data_path}/{dataset_name}_rw24', pre_transform=Compose([AddRandomWalkPE(pe_dim)]))
 
 
 def get_model(model_name):
@@ -183,10 +178,10 @@ def main(args):
     set_seed(args.seed)
 
     # Get the dataset object
-    dataset = get_dataset(args.dataset, args.pe, args.pe_dim)
+    dataset = get_dataset('C:\\Users\\gerar_0ev1q4m\\OneDrive\\Documents\\AI\\QGNN\\src\\QGNN\\data', args.dataset, 12)
 
     # Split the dataset into train, val and test
-    train_dataset, val_dataset, test_dataset = split_qm9(dataset)
+    train_dataset, val_dataset, test_dataset = split_dataset(dataset)
 
     # Initialize the dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
@@ -204,7 +199,6 @@ def main(args):
     # Setting the WandB parameters
     config = {
         **vars(args),
-        'fc': 'fc' in args.dataset,
         'num_params': num_params
     }
     run_name = f'{args.model}_{args.dataset}' \

@@ -126,10 +126,8 @@ def parse_options():
 
 
 
-def get_dataset(root_path, dataset_name, system_size):
-    if dataset_name == "IsingModel":
-        return IsingModelDataset(root=root_path, data_file=f"nk_{system_size}.npy")
-
+def get_dataset(dataset_path):
+    return IsingModelDataset(root=os.path.dirname(dataset_path), data_file=os.path.basename(dataset_path))
 
 def split_dataset(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
     dataset_size = len(dataset)
@@ -178,7 +176,7 @@ def main(args):
     set_seed(args.seed)
 
     # Get the dataset object
-    dataset = get_dataset('C:\\Users\\gerar_0ev1q4m\\OneDrive\\Documents\\AI\\QGNN\\src\\QGNN\\data', args.dataset, 12)
+    dataset = get_dataset(args.dataset)
 
     # Split the dataset into train, val and test
     train_dataset, val_dataset, test_dataset = split_dataset(dataset)

@@ -15,7 +15,7 @@ class EGNNLayer(nn.Module):
 
         # Message network: phi_m
         self.message_mlp = nn.Sequential(
-            nn.Linear(2 * hidden_channels + 1, hidden_channels),
+            nn.Linear(3 * hidden_channels, hidden_channels),
             nn.SiLU(), nn.Linear(hidden_channels, hidden_channels), nn.SiLU())
 
         # Update network: phi_h
@@ -48,17 +48,23 @@ class EGNNLayer(nn.Module):
 
 
 class EGNN(nn.Module):
-    def __init__(self, in_channels, hidden_channels, num_layers, out_channels, include_dist, **kwargs):
+    def __init__(self, in_channels, edge_channels, hidden_channels, num_layers, out_channels, include_dist, **kwargs):
         super().__init__()
         self.in_channels = in_channels
+        self.edge_channels = edge_channels
         self.hidden_channels = hidden_channels
         self.num_layers = num_layers
         self.out_channels = out_channels
         self.include_dist = include_dist
 
-        # Initialization of embedder for the input features 
-        self.embed = nn.Sequential(
+        # Initialization of embedders for the input features
+        self.embed_nodes = nn.Sequential(
             nn.Linear(self.in_channels, self.hidden_channels),
+            nn.SiLU(),
+            nn.Linear(self.hidden_channels, self.hidden_channels))
+        
+        self.embed_edges = nn.Sequential(
+            nn.Linear(self.edge_channels, self.hidden_channels),
             nn.SiLU(),
             nn.Linear(self.hidden_channels, self.hidden_channels))
 
@@ -80,8 +86,11 @@ class EGNN(nn.Module):
     def forward(self, data):
         x_nodes, x_edges, edge_index, batch = data.x_nodes, data.x_edges, data.edge_index, data.batch
 
-        # Pass the node features through the embedder
-        x_nodes = self.embed(x_nodes)
+        # Pass the node features through the node embedder
+        x_nodes = self.embed_nodes(x_nodes)
+
+        # Pass the edge features through the edge embedder
+        x_edges = self.embed_edges(x_edges)
 
         for layer in self.layers:
             x_nodes = layer(x_nodes, x_edges, edge_index)  # Use x_edges instead of pos
@@ -92,5 +101,10 @@ class EGNN(nn.Module):
         out = self.readout(x_nodes)
 
         return torch.squeeze(out)
+
+
+
+
+
 
 

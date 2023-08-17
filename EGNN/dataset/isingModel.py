@@ -29,12 +29,10 @@ class IsingModelDataset(Dataset):
         g = torch.tensor(hamiltonian['g'], dtype=torch.float32)
         
         # Get coupling and local fields from Hamiltonian
-        J = hamiltonian['J']  # J is an n x n triangular upper matrix, where n is the number of nodes
-        J = [J[index] for index in edge_indices_undirected]  # edge list of coupling strengths
-        J = torch.tensor(J, dtype=torch.float32)
+        J = hamiltonian['J']
+        edge_indices_undirected = edge_indices_undirected.clone().detach() 
+        J = torch.tensor(np.array([J[index] for index in edge_indices_undirected]), dtype=torch.float32)
         local_field_strength = torch.stack([h, g], dim=1)
-
-        # TODO: Do we need to copy each edge_rdm to the other side of the adjacency matrix? (current order is sorted by upper triangular)
 
         # Flatten node and edge matrices
         if flatten:
@@ -55,3 +53,4 @@ if __name__ == "__main__":
     rand_idx = np.random.randint(0, len(dataset))
     data_point = dataset[rand_idx]
     print(data_point)
+    #data = np.load("C:\\Users\\gerar_0ev1q4m\\OneDrive\\Documents\\AI\\QGNN\\src\\QGNN\\data\\nk_(12,)_False.npy", allow_pickle = True)

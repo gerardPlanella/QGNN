@@ -66,6 +66,8 @@ def parse_options():
                         help='Available models: egnn | mpnn ')
     parser.add_argument('--dataset', type=str, default='IsingModel', metavar='S',
                         help='Available datasets: IsingModel')
+    parser.add_argument('--dataset_path', type=str, default='C:\\Users\\gerar_0ev1q4m\\OneDrive\\Documents\\AI\\QGNN\\src\\QGNN\\data\\nk_(12,)_False.npy', metavar='S',
+                        help='Available datasets: IsingModel')
     parser.add_argument('--seed', type=int, default=42, metavar='N',
                         help='Random seed')
     parser.add_argument('--epochs', type=int, default=1, metavar='N',
@@ -126,8 +128,11 @@ def parse_options():
 
 
 
-def get_dataset(dataset_path):
-    return IsingModelDataset(root=os.path.dirname(dataset_path), data_file=os.path.basename(dataset_path), flatten=True)
+def get_dataset(dataset_name, dataset_path):
+    if dataset_name == "IsingModel":
+        return IsingModelDataset(root=os.path.dirname(dataset_path), data_file=os.path.basename(dataset_path), flatten=True)
+    else:
+        raise NotImplementedError()
 
 def split_dataset(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
     dataset_size = len(dataset)
@@ -176,7 +181,7 @@ def main(args):
     set_seed(args.seed)
 
     # Get the dataset object
-    dataset = get_dataset(args.dataset)
+    dataset = get_dataset(args.dataset, args.dataset_path)
 
     # Split the dataset into train, val and test
     train_dataset, val_dataset, test_dataset = split_dataset(dataset)
@@ -203,7 +208,7 @@ def main(args):
                f'_epochs-{args.epochs}_num_layers-{args.num_layers}'
 
     # Initialize the wandb run
-    wandb.init(project="qgnn-benchmark-exp", entity="qgnn-gnn-benchmark", config=config, reinit=True,
+    wandb.init(project="qgnn-benchmark-exp", config=config, reinit=True,
                name=run_name)
     wandb.watch(model)
 

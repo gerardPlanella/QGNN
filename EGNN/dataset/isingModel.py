@@ -53,4 +53,3 @@ if __name__ == "__main__":
     rand_idx = np.random.randint(0, len(dataset))
     data_point = dataset[rand_idx]
     print(data_point)
-    #data = np.load("C:\\Users\\gerar_0ev1q4m\\OneDrive\\Documents\\AI\\QGNN\\src\\QGNN\\data\\nk_(12,)_False.npy", allow_pickle = True)

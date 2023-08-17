@@ -127,7 +127,7 @@ def parse_options():
 
 
 def get_dataset(dataset_path):
-    return IsingModelDataset(root=os.path.dirname(dataset_path), data_file=os.path.basename(dataset_path))
+    return IsingModelDataset(root=os.path.dirname(dataset_path), data_file=os.path.basename(dataset_path), flatten=True)
 
 def split_dataset(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
     dataset_size = len(dataset)

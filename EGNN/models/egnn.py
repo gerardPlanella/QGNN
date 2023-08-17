@@ -29,6 +29,7 @@ class EGNNLayer(nn.Module):
         send, rec = edge_index
 
         # Compute the distance between nodes
+        # TODO: How to use edge features in EGNN
         edge_feat = x_edges[:, send * (num_nodes - 1) + rec]
 
         # Pass the state through the message net

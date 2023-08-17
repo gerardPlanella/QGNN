@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_scatter import scatter_add
+#from torch_scatter import scatter_add
 from torch_geometric.nn import global_add_pool
 
 
@@ -25,6 +25,7 @@ class EGNNLayer(nn.Module):
             nn.Linear(2 * hidden_channels, hidden_channels), nn.SiLU(),
             nn.Linear(hidden_channels, hidden_channels))
 
+    """
     def forward(self, x, pos, edge_index):
         send, rec = edge_index
 
@@ -37,6 +38,27 @@ class EGNNLayer(nn.Module):
 
         # Aggregate pos from neighbourhood by summing
         aggr = scatter_add(message, rec, dim=0)
+
+        # Pass the new state through the update network alongside x
+        update = self.update_mlp(torch.cat((x, aggr), dim=1))
+        return update
+    """
+    #Alternate Implementation avoiding torch_scatter
+    def forward(self, x, pos, edge_index):
+        send, rec = edge_index
+
+        # Compute the distance between nodes
+        dist = torch.norm(pos[send] - pos[rec], dim=1)
+
+        # Pass the state through the message net
+        state = torch.cat((x[send], x[rec], dist.unsqueeze(1)), dim=1)
+        message = self.message_mlp(state)
+
+        # Manually perform aggregation
+        num_nodes = x.size(0)
+        num_edges = send.size(0)
+        aggr = torch.zeros(num_nodes, message.size(1), dtype=message.dtype, device=message.device)
+        aggr.scatter_add_(0, rec.view(-1, 1).expand(num_edges, message.size(1)), message)
 
         # Pass the new state through the update network alongside x
         update = self.update_mlp(torch.cat((x, aggr), dim=1))

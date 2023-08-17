@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
-#from torch_scatter import scatter_add
 from torch_geometric.nn import global_add_pool
-
 
 class EGNNLayer(nn.Module):
     """Standard EGNN layer
@@ -24,34 +22,17 @@ class EGNNLayer(nn.Module):
         self.update_mlp = nn.Sequential(
             nn.Linear(2 * hidden_channels, hidden_channels), nn.SiLU(),
             nn.Linear(hidden_channels, hidden_channels))
+        
 
-    """
-    def forward(self, x, pos, edge_index):
+    def forward(self, x, x_edges, edge_index):
+        num_nodes = x_edges.shape[2]
         send, rec = edge_index
 
         # Compute the distance between nodes
-        dist = torch.norm(pos[send] - pos[rec], dim=1)
+        edge_feat = x_edges[:, send * (num_nodes - 1) + rec]
 
         # Pass the state through the message net
-        state = torch.cat((x[send], x[rec], dist.unsqueeze(1)), dim=1)
-        message = self.message_mlp(state)
-
-        # Aggregate pos from neighbourhood by summing
-        aggr = scatter_add(message, rec, dim=0)
-
-        # Pass the new state through the update network alongside x
-        update = self.update_mlp(torch.cat((x, aggr), dim=1))
-        return update
-    """
-    #Alternate Implementation avoiding torch_scatter
-    def forward(self, x, pos, edge_index):
-        send, rec = edge_index
-
-        # Compute the distance between nodes
-        dist = torch.norm(pos[send] - pos[rec], dim=1)
-
-        # Pass the state through the message net
-        state = torch.cat((x[send], x[rec], dist.unsqueeze(1)), dim=1)
+        state = torch.cat((x[send], x[rec], edge_feat.unsqueeze(1)), dim=1)
         message = self.message_mlp(state)
 
         # Manually perform aggregation
@@ -66,27 +47,18 @@ class EGNNLayer(nn.Module):
 
 
 class EGNN(nn.Module):
-    """EGNN model
-
-    Args:
-        in_channels (int): Number of input features
-        hidden_channels (int): Number of hidden units
-        num_layers (int): Number of layers
-        out_channels (int): Number of output features
-        **kwargs: Additional keyword arguments
-    """
-    def __init__(self, in_channels, hidden_channels, num_layers, out_channels,
-         **kwargs):
+    def __init__(self, in_channels, hidden_channels, num_layers, out_channels, include_dist, **kwargs):
         super().__init__()
         self.in_channels = in_channels
         self.hidden_channels = hidden_channels
         self.num_layers = num_layers
         self.out_channels = out_channels
-        self.include_dist = kwargs['include_dist']
-        
+        self.include_dist = include_dist
+
         # Initialization of embedder for the input features 
         self.embed = nn.Sequential(
-            nn.Linear(self.in_channels, self.hidden_channels), nn.SiLU(),
+            nn.Linear(self.in_channels, self.hidden_channels),
+            nn.SiLU(),
             nn.Linear(self.hidden_channels, self.hidden_channels))
 
         # Initialization of hidden EGNN with (optional) LSPE hidden layers
@@ -96,25 +68,28 @@ class EGNN(nn.Module):
 
         # Readout networks
         self.pre_readout = nn.Sequential(
-            nn.Linear(self.hidden_channels, self.hidden_channels), nn.SiLU(),
+            nn.Linear(self.hidden_channels, self.hidden_channels),
+            nn.SiLU(),
             nn.Linear(self.hidden_channels, self.hidden_channels))
         self.readout = nn.Sequential(
-            nn.Linear(self.hidden_channels, self.hidden_channels), nn.SiLU(),
+            nn.Linear(self.hidden_channels, self.hidden_channels),
+            nn.SiLU(),
             nn.Linear(self.hidden_channels, self.out_channels))
 
     def forward(self, data):
-        x, pos, edge_index, batch = data.x, data.pos, data.edge_index, data.batch
+        x_nodes, x_edges, edge_index, batch = data.x_nodes, data.x_edges, data.edge_index, data.batch
 
         # Pass the node features through the embedder
-        x = self.embed(x)
+        x_nodes = self.embed(x_nodes)
 
         for layer in self.layers:
-            out =  layer(x, pos, edge_index)
-            x += out
+            x_nodes = layer(x_nodes, x_edges, edge_index)  # Use x_edges instead of pos
 
         # Readout
-        x = self.pre_readout(x)
-        x = global_add_pool(x, batch)
-        out = self.readout(x)
+        x_nodes = self.pre_readout(x_nodes)
+        x_nodes = global_add_pool(x_nodes, batch)
+        out = self.readout(x_nodes)
 
         return torch.squeeze(out)
+
+

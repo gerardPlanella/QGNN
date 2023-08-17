@@ -21,7 +21,7 @@ def evaluate(model, loader, criterion, device, mean, mad):
     model.eval()
     for _, batch in enumerate(tqdm(loader)):
         batch = batch.to(device)
-        target = torch.squeeze(batch.y[:, 1])
+        target = torch.squeeze(batch.y)
         pred = model(batch)
         loss = criterion(pred * mad + mean, target)
         mae += loss.item()
@@ -49,7 +49,7 @@ def train(model, loader, criterion,
     model.train()
     for _, batch in enumerate(tqdm(loader)):
         batch = batch.to(device)
-        target = torch.squeeze(batch.y[:, 1]).to(device)
+        target = torch.squeeze(batch.y).to(device)
 
         # Perform forward pass
         pred = model(batch)

@@ -40,10 +40,12 @@ class IsingModelDataset(Dataset):
         if self.flatten:
             node_rdms = [rdm.flatten() for rdm in node_rdms]
             edge_rdms = [rdm.flatten() for rdm in edge_rdms]
+            """
             J_tensor = torch.tensor(
                 np.array([J[edge_indices_undirected[0, i], edge_indices_undirected[1, i]] for i in range(edge_indices_undirected.shape[1])]),
                 dtype=torch.float32
-            )   
+            )
+            """   
 
         # Create a PyTorch Geometric Data object
         pyg_data = Data(x_nodes=local_field_strength, x_edges=J_tensor, edge_index=edge_indices_undirected, y_quantum_node=node_rdms, y_quantum_edge=edge_rdms, y=ground_state_energy)
@@ -53,7 +55,7 @@ class IsingModelDataset(Dataset):
 if __name__ == "__main__":
     # Create an instance of your custom dataset and call process
     data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_(12,)_False.npy"
-    dataset = IsingModelDataset(root=os.path.dirname(data_file), data_file=os.path.basename(data_file))
+    dataset = IsingModelDataset(root=os.path.dirname(data_file), data_file=os.path.basename(data_file), flatten=True)
 
     # Example of accessing a specific data point
     rand_idx = np.random.randint(0, len(dataset))

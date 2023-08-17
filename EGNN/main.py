@@ -81,7 +81,7 @@ def parse_options():
     
 
     # Network specific parameters
-    parser.add_argument('--in_channels', type=int, default=11, metavar='N',
+    parser.add_argument('--in_channels', type=int, default=2, metavar='N',
                         help='Input dimension of features')
     parser.add_argument('--hidden_channels', type=int, default=128, metavar='N',
                         help='Hidden dimensions')
@@ -221,7 +221,7 @@ def main(args):
     best_train_mae, best_val_mae, model_path = float('inf'), float('inf'), ""
 
     # Calculate the mean and mad of the dataset
-    values = [torch.squeeze(graph.y[:, 1]) for graph in train_loader.dataset]
+    values = [torch.squeeze(graph.y) for graph in train_loader.dataset]
     mean = sum(values) / len(values)
     mad = sum([abs(v - mean) for v in values]) / len(values)
     mean, mad = mean.to(device), mad.to(device)

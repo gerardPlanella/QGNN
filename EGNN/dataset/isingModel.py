@@ -30,7 +30,6 @@ class IsingModelDataset(Dataset):
         
         # Get coupling and local fields from Hamiltonian
         J = hamiltonian['J']
-        edge_indices_undirected = edge_indices_undirected.clone().detach() 
         J = torch.tensor(np.array([J[index] for index in edge_indices_undirected]), dtype=torch.float32)
         local_field_strength = torch.stack([h, g], dim=1)
 

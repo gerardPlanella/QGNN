@@ -23,32 +23,19 @@ class IsingModelDataset(Dataset):
         # Generate edge indices for a fully connected graph
         num_nodes = len(node_rdms)  # Number of nodes
         edge_indices = torch.triu_indices(num_nodes, num_nodes, offset=1)
-        edge_indices_undirected = to_undirected(edge_indices)
 
         # Convert to PyTorch tensors
         ground_state_energy = torch.tensor(ground_state_energy, dtype=torch.float32)
+
+        # Hamiltonian parameters
+        # J = torch.tensor(hamiltonian['J'][edge_indices[0], edge_indices[1]], dtype=torch.float32)  # in case you need a version without the star ;)
+        J = torch.tensor(hamiltonian['J'][*edge_indices], dtype=torch.float32)
         h = torch.tensor(hamiltonian['h'], dtype=torch.float32)
         g = torch.tensor(hamiltonian['g'], dtype=torch.float32)
-        
-        # Get coupling and local fields from Hamiltonian
-        J = hamiltonian['J']
-        J_tensor = torch.tensor(np.array([J[index] for index in edge_indices_undirected]), dtype=torch.float32)
-       
         local_field_strength = torch.stack([h, g], dim=1)
 
-        # Flatten node and edge matrices
-        if self.flatten:
-            node_rdms = [rdm.flatten() for rdm in node_rdms]
-            edge_rdms = [rdm.flatten() for rdm in edge_rdms]
-            """
-            J_tensor = torch.tensor(
-                np.array([J[edge_indices_undirected[0, i], edge_indices_undirected[1, i]] for i in range(edge_indices_undirected.shape[1])]),
-                dtype=torch.float32
-            )
-            """   
-
         # Create a PyTorch Geometric Data object
-        pyg_data = Data(x_nodes=local_field_strength, x_edges=J_tensor, edge_index=edge_indices_undirected, y_quantum_node=node_rdms, y_quantum_edge=edge_rdms, y=ground_state_energy)
+        pyg_data = Data(x_nodes=local_field_strength, x_edges=J, edge_index=edge_indices, y_quantum_node=node_rdms, y_quantum_edge=edge_rdms, y=ground_state_energy)
 
         return pyg_data
 

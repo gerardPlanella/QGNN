@@ -96,18 +96,20 @@ class IsingModelDataset(Dataset):
             loaded_dataset = pickle.load(file)
         return loaded_dataset
 
-# Example usage:
-data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.npy"
-dataset = IsingModelDataset(root=os.path.dirname(data_file), data_file=os.path.basename(data_file))
 
-# Save the dataset
-save_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.pkl"
-dataset.save(save_path)
+if __name__ == "__main__":
+    # Example usage:
+    data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.npy"
+    dataset = IsingModelDataset(root=os.path.dirname(data_file), data_file=os.path.basename(data_file))
 
-# Load the saved dataset
-loaded_dataset = IsingModelDataset.load(save_path)
+    # Save the dataset
+    save_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.pkl"
+    dataset.save(save_path)
 
-# Access data points from the loaded dataset
-rand_idx = np.random.randint(0, len(loaded_dataset))
-data_point = loaded_dataset[rand_idx]
-print(data_point)
+    # Load the saved dataset
+    loaded_dataset = IsingModelDataset.load(save_path)
+
+    # Access data points from the loaded dataset
+    rand_idx = np.random.randint(0, len(loaded_dataset))
+    data_point = loaded_dataset[rand_idx]
+    print(data_point)

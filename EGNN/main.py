@@ -66,7 +66,7 @@ def parse_options():
                         help='Available models: egnn | mpnn ')
     parser.add_argument('--dataset', type=str, default='IsingModel', metavar='S',
                         help='Available datasets: IsingModel')
-    parser.add_argument('--dataset_path', type=str, default='data\\100_nk_(12,)_False.pkl', metavar='S',
+    parser.add_argument('--dataset_path', type=str, default='data/nk_10000_(12,)_False.pkl', metavar='S',
                         help='Available datasets: IsingModel')
     parser.add_argument('--seed', type=int, default=42, metavar='N',
                         help='Random seed')
@@ -130,7 +130,7 @@ def parse_options():
 
 def get_dataset(dataset_name, dataset_path):
     if dataset_name == "IsingModel":
-        return IsingModelDataset.load(dataset_path)
+        return IsingModelDataset.load(os.path.dirname(os.path.abspath(__file__)) + "/../" + dataset_path)
     else:
         raise NotImplementedError()
 

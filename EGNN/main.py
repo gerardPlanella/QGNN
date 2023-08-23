@@ -66,11 +66,11 @@ def parse_options():
                         help='Available models: egnn | mpnn ')
     parser.add_argument('--dataset', type=str, default='IsingModel', metavar='S',
                         help='Available datasets: IsingModel')
-    parser.add_argument('--dataset_path', type=str, default='C:\\Users\\gerar_0ev1q4m\\OneDrive\\Documents\\AI\\QGNN\\src\\QGNN\\data\\nk_(12,)_False.npy', metavar='S',
+    parser.add_argument('--dataset_path', type=str, default='data\\100_nk_(12,)_False.pkl', metavar='S',
                         help='Available datasets: IsingModel')
     parser.add_argument('--seed', type=int, default=42, metavar='N',
                         help='Random seed')
-    parser.add_argument('--epochs', type=int, default=1, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='Number of epochs to train')
     parser.add_argument('--batch_size', type=int, default=12, metavar='N',
                         help='Batch size for training')
@@ -130,7 +130,7 @@ def parse_options():
 
 def get_dataset(dataset_name, dataset_path):
     if dataset_name == "IsingModel":
-        return IsingModelDataset(root=os.path.dirname(dataset_path), data_file=os.path.basename(dataset_path), flatten=True)
+        return IsingModelDataset.load(dataset_path)
     else:
         raise NotImplementedError()
 

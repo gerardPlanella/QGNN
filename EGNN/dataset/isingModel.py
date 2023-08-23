@@ -28,8 +28,8 @@ class IsingModelDataset(Dataset):
         ground_state_energy = torch.tensor(ground_state_energy, dtype=torch.float32)
 
         # Hamiltonian parameters
-        # J = torch.tensor(hamiltonian['J'][edge_indices[0], edge_indices[1]], dtype=torch.float32)  # in case you need a version without the star ;)
-        J = torch.tensor(hamiltonian['J'][*edge_indices], dtype=torch.float32)
+        J = torch.tensor(hamiltonian['J'][edge_indices[0], edge_indices[1]], dtype=torch.float32)  # in case you need a version without the star ;)
+        #J = torch.tensor(hamiltonian['J'][*edge_indices], dtype=torch.float32)
         h = torch.tensor(hamiltonian['h'], dtype=torch.float32)
         g = torch.tensor(hamiltonian['g'], dtype=torch.float32)
         local_field_strength = torch.stack([h, g], dim=1)

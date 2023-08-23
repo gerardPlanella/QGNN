@@ -35,11 +35,7 @@ class IsingModelDataset(Dataset):
         data_array = np.load(os.path.join(self.root, self.data_file), allow_pickle=True)
         preprocessed_data_array = []
 
-        # Use tqdm for progress bar
-        if self.verbose:
-            data_array = tqdm(data_array, desc="Preprocessing", dynamic_ncols=True)
-
-        for data in data_array:
+        for data in tqdm(data_array, desc="Preprocessing Dataset", disable=not self.verbose):
             preprocessed_data_array.append(self._preprocess_data(data))
 
         return preprocessed_data_array
@@ -101,11 +97,11 @@ class IsingModelDataset(Dataset):
         return loaded_dataset
 
 # Example usage:
-data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_(12,)_False.npy"
+data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.npy"
 dataset = IsingModelDataset(root=os.path.dirname(data_file), data_file=os.path.basename(data_file))
 
 # Save the dataset
-save_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/100_nk_(12,)_False.pkl"
+save_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.pkl"
 dataset.save(save_path)
 
 # Load the saved dataset

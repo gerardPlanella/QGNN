@@ -1,5 +1,0 @@
-[default]
-entity = qgnn-uva-aalto
-project = qgnn-benchmark-exp
-base_url = https://api.wandb.ai
-

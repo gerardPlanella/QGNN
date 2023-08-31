@@ -1,22 +1,14 @@
 import os
-import numpy as np
 import torch
-import pickle
-from tqdm import tqdm  # Import tqdm for the progress bar
-from torch_geometric.data import Dataset, Data
-from torch_geometric.utils import to_undirected
-
+from torch_geometric.data import Dataset
 
 class IsingModelDataset(Dataset):
-    def __init__(self, root, data_file, transform=None, pre_transform=None, flatten=False, verbose=True):
-        super(IsingModelDataset, self).__init__(root, transform, pre_transform)
-        
-        self.data_file = data_file
-        self.flatten = flatten
-        self.verbose = verbose  # Add a verbose flag
+    def __init__(self, file_path, transform=None, pre_transform=None):
+        super(IsingModelDataset, self).__init__(os.path.dirname(file_path), transform, pre_transform)
 
-        # Load .npy file and preprocess all data points
-        self.data_array = self._load_and_preprocess_data()
+        self.file_path = file_path
+        self.data_array = torch.load(self.file_path)
+        print("Loaded %d data points from %s" % (len(self.data_array), self.file_path))
 
     def len(self):
         return len(self.data_array)
@@ -25,66 +17,10 @@ class IsingModelDataset(Dataset):
         # Return the preprocessed data point at the given index
         return self.data_array[idx]
 
-    def _load_and_preprocess_data(self):
-        """
-        Load and preprocess the entire dataset.
-
-        Returns:
-            data_array: A list of preprocessed data points.
-        """
-        data_array = np.load(os.path.join(self.root, self.data_file), allow_pickle=True)
-        preprocessed_data_array = []
-
-        for data in tqdm(data_array, desc="Preprocessing Dataset", disable=not self.verbose):
-            preprocessed_data_array.append(self._preprocess_data(data))
-
-        return preprocessed_data_array
-
-    def _preprocess_data(self, data):
-        """
-        Custom data point pre-processing method.
-
-        Args:
-            data: The data point to preprocess.
-
-        Returns:
-            preprocessed_data_point: The preprocessed data point.
-        """
-        hamiltonian, ground_state_energy, node_rdms, edge_rdms = data
-
-        # Generate edge indices for a fully connected graph
-        num_nodes = len(node_rdms)  # Number of nodes
-        edge_indices = torch.triu_indices(num_nodes, num_nodes, offset=1)
-
-        # Convert to PyTorch tensors
-        ground_state_energy = torch.tensor(ground_state_energy, dtype=torch.float32)
-
-        # Hamiltonian parameters
-        J = torch.tensor(hamiltonian['J'][edge_indices[0], edge_indices[1]], dtype=torch.float32)  # in case you need a version without the star ;)
-        #J = torch.tensor(hamiltonian['J'][*edge_indices], dtype=torch.float32)
-        h = torch.tensor(hamiltonian['h'], dtype=torch.float32)
-        g = torch.tensor(hamiltonian['g'], dtype=torch.float32)
-        local_field_strength = torch.stack([h, g], dim=1)
-
-        # Create a PyTorch Geometric Data object
-        pyg_data = Data(x_nodes=local_field_strength, x_edges=J, edge_index=edge_indices, y_quantum_node=node_rdms, y_quantum_edge=edge_rdms, y=ground_state_energy)
-
-        return pyg_data
-
-    def save(self, file_path):
-        """
-        Save the dataset to a file using pickle.
-
-        Args:
-            file_path (str): Path to the file where the dataset will be saved.
-        """
-        with open(file_path, 'wb') as file:
-            pickle.dump(self, file)
-
     @classmethod
     def load(cls, file_path):
         """
-        Load a dataset from a file using pickle.
+        Load a dataset from a file.
 
         Args:
             file_path (str): Path to the file containing the dataset.
@@ -92,24 +28,17 @@ class IsingModelDataset(Dataset):
         Returns:
             dataset: An instance of the IsingModelDataset class containing the loaded data.
         """
-        with open(file_path, 'rb') as file:
-            loaded_dataset = pickle.load(file)
-        return loaded_dataset
+        return IsingModelDataset(file_path)
 
 
 if __name__ == "__main__":
     # Example usage:
-    data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.npy"
-    dataset = IsingModelDataset(root=os.path.dirname(data_file), data_file=os.path.basename(data_file))
-
-    # Save the dataset
-    save_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_10000_(12,)_False.pkl"
-    dataset.save(save_path)
-
-    # Load the saved dataset
-    loaded_dataset = IsingModelDataset.load(save_path)
-
+    data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_1800_10.pt"
+    # Load the dataset
+    dataset = IsingModelDataset.load(data_file)
     # Access data points from the loaded dataset
-    rand_idx = np.random.randint(0, len(loaded_dataset))
-    data_point = loaded_dataset[rand_idx]
+    rand_idx = int(torch.randint(len(dataset), (1,)))
+    data_point = dataset[rand_idx]
     print(data_point)
+    print(data_point.y_node_rdms[0])
+    print(data_point.y_edge_rdms[0])

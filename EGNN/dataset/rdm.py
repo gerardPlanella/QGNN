@@ -144,6 +144,10 @@ def is_rdm(rdm):
         return False
     return True
 
+def fildelity(rdm1, rdm2):
+    """ Compute the fidelity between two RDMs. """
+    return np.sum(np.sqrt(np.linalg.eigvals(rdm1 @ rdm2).real))**2  # this is correct
+
 if __name__ == '__main__':
     # Test su and pauli_basis
     assert len(su(2**2, include_identity=True)) == len(pauli_basis(2, include_identity=True))

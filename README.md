@@ -1,3 +1,3 @@
 # Quantum GNN Architecture Development
 
-This repository contains the development and tests for a new GNN architecture optimized for quantum applications such as Quantum N-Body simulations and Mollecular synthesis. It arised from the collaboration between Gerard Planella from the University of Amsterdam and Adrian Müller from Aalto University, supervised by Prof. Max Welling (Univesity of Amsterdam & Microsoft Research) and Prof. Vikas Garg (Aalto University).
+This repository contains the code for a new QGNN architecture for applications such as quantum many-body simulations and molecular synthesis. It is developed in collaboration between Gerard Planella, University of Amsterdam, and Adrian Müller, Aalto University, supervised by Prof. Max Welling, Univesity of Amsterdam, and Prof. Vikas Garg, Aalto University.

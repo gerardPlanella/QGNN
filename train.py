@@ -3,7 +3,7 @@ import torch
 
 from tqdm import tqdm
 
-def evaluate(model, loader, criterion, device, mean, mad):
+def evaluate(model, loader, criterion, device):
     """Evaluate the model on the validation/test set.
 
     Args:
@@ -11,8 +11,6 @@ def evaluate(model, loader, criterion, device, mean, mad):
         loader (torch.utils.data.DataLoader): The validation set loader.
         criterion (torch.nn.Module): The loss function.
         device (torch.device): The device to use.
-        mean (float): The mean of the training set.
-        mad (float): The mean absolute deviation of the training set.
 
     Returns:
         float: The mean absolute error on the validation set.
@@ -21,16 +19,13 @@ def evaluate(model, loader, criterion, device, mean, mad):
     model.eval()
     for _, batch in enumerate(tqdm(loader)):
         batch = batch.to(device)
-        target = torch.squeeze(batch.y)
         pred = model(batch)
-        loss = criterion(pred * mad + mean, target)
+        loss = criterion(pred, batch)
         mae += loss.item()
 
     return mae / len(loader.dataset)
 
-def train(model, loader, criterion,
-          optimizer, device,
-          mean, mad):
+def train(model, loader, criterion, optimizer, device):
     """Train the model on the training set.
 
     Args:
@@ -39,8 +34,6 @@ def train(model, loader, criterion,
         criterion (torch.nn.Module): The loss function.
         optimizer (torch.optim.Optimizer): The optimizer.
         device (torch.device): The device to use.
-        mean (float): The mean of the training set.
-        mad (float): The mean absolute deviation of the training set.
 
     Returns:
         float: The mean absolute error on the training set.
@@ -49,14 +42,13 @@ def train(model, loader, criterion,
     model.train()
     for _, batch in enumerate(tqdm(loader)):
         batch = batch.to(device)
-        target = torch.squeeze(batch.y).to(device)
 
         # Perform forward pass
         pred = model(batch)
 
         # Calculate train loss
-        loss = criterion(pred, (target - mean) / mad)
-        mae += criterion(pred * mad + mean, target).item()
+        loss = criterion(pred, batch)
+        mae += loss.item()
 
         # Delete info on previous gradients
         optimizer.zero_grad()

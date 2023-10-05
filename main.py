@@ -13,11 +13,11 @@ import argparse
 from tqdm import tqdm
 from pprint import pprint
 from torch_geometric.loader import DataLoader
-from dataset.isingModel import IsingModelDataset
+from dataset import IsingModelDataset
 from train import train, evaluate
 
-# Plotting via wandb
-import wandb
+from baselines import GNN #, BP
+# from QGNN import QGNN
 
 script_dir = os.path.dirname(__file__)
 
@@ -45,6 +45,48 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+def get_dataset(dataset_type, dataset_path):
+    if dataset_type == "ising":
+        return IsingModelDataset.load(os.path.dirname(os.path.abspath(__file__)) + "/" + dataset_path)
+    else:
+        raise NotImplementedError()
+
+def split_dataset(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
+    dataset_size = len(dataset)
+    assert (test_ratio + val_ratio + train_ratio == 1.0)
+
+    # Calculate the number of samples for each split
+    num_train = int(dataset_size * train_ratio)
+    num_val = int(dataset_size * val_ratio)
+    num_test = dataset_size - num_train - num_val
+    
+    # Create a list of indices to shuffle the dataset
+    indices = np.arange(dataset_size)
+    np.random.shuffle(indices)
+    
+    # Split the dataset using the shuffled indices
+    train_indices, remaining_indices = indices[:num_train], indices[num_train:]
+    val_indices, test_indices = remaining_indices[:num_val], remaining_indices[num_val:]
+    
+    # Create train, val, and test subsets using list indexing
+    train_dataset = [dataset[i] for i in train_indices]
+    val_dataset = [dataset[i] for i in val_indices]
+    test_dataset = [dataset[i] for i in test_indices]
+    
+    return train_dataset, val_dataset, test_dataset
+
+def get_model(model_name):
+    """Gets the corresponding model according to the specified run args."""
+    if model_name == 'gnn':
+        return GNN
+    elif model_name == 'bp':
+        raise NotImplementedError("BP is not implemented yet.")
+        # return BP
+    elif model_name == 'qgnn':
+        raise NotImplementedError("QGNN is not implemented yet.")
+        # return QGNN
+    else:
+        raise NotImplementedError(f'Model name {model_name} not recognized.')
 
 def parse_options():
     """Function for parsing command line arguments."""
@@ -60,14 +102,16 @@ def parse_options():
     parser.add_argument('--evaluate', type=str, default=None, metavar='S',
                         help='Directly evaluates the model with the model weights'
                              'of the path specified here. No need to specify the directory.')
+    parser.add_argument('--use_wandb', type=bool, default=False, metavar='S',
+                        help='Whether or not to use wandb for logging.')
 
     # General Training parameters
-    parser.add_argument('--model', type=str, default='egnn', metavar='S',
-                        help='Available models: egnn | mpnn ')
-    parser.add_argument('--dataset', type=str, default='IsingModel', metavar='S',
-                        help='Available datasets: IsingModel')
-    parser.add_argument('--dataset_path', type=str, default='data/nk_10000_(12,)_False.pkl', metavar='S',
-                        help='Available datasets: IsingModel')
+    parser.add_argument('--model', type=str, default='gnn', metavar='S',
+                        help='Available models: qgnn | gnn | bp')
+    parser.add_argument('--dataset_type', type=str, default='ising', metavar='S',
+                        help='Available datasets: ising')
+    parser.add_argument('--dataset_path', type=str, default='dataset/ising/data/nk_1600_12_True.pt', metavar='S',
+                        help='Available datasets: ising')
     parser.add_argument('--seed', type=int, default=42, metavar='N',
                         help='Random seed')
     parser.add_argument('--epochs', type=int, default=10, metavar='N',
@@ -126,62 +170,19 @@ def parse_options():
     del args.write_config_to
     return args
 
-
-
-def get_dataset(dataset_name, dataset_path):
-    if dataset_name == "IsingModel":
-        return IsingModelDataset.load(os.path.dirname(os.path.abspath(__file__)) + "/../" + dataset_path)
-    else:
-        raise NotImplementedError()
-
-def split_dataset(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
-    dataset_size = len(dataset)
-    assert (test_ratio + val_ratio + train_ratio == 1.0)
-
-    # Calculate the number of samples for each split
-    num_train = int(dataset_size * train_ratio)
-    num_val = int(dataset_size * val_ratio)
-    num_test = dataset_size - num_train - num_val
-    
-    # Create a list of indices to shuffle the dataset
-    indices = np.arange(dataset_size)
-    np.random.shuffle(indices)
-    
-    # Split the dataset using the shuffled indices
-    train_indices, remaining_indices = indices[:num_train], indices[num_train:]
-    val_indices, test_indices = remaining_indices[:num_val], remaining_indices[num_val:]
-    
-    # Create train, val, and test subsets using list indexing
-    train_dataset = [dataset[i] for i in train_indices]
-    val_dataset = [dataset[i] for i in val_indices]
-    test_dataset = [dataset[i] for i in test_indices]
-    
-    return train_dataset, val_dataset, test_dataset
-
-
-
-def get_model(model_name):
-    """Gets the corresponding model according to the specified run args."""
-    if model_name == 'egnn':
-        from models.egnn import EGNN
-        return EGNN
-    else:
-        raise NotImplementedError(f'Model name {model_name} not recognized.')
-
-def main(args):
-    """Main function."""
-    # Display run arguments
-    pprint(args)
+if __name__ == '__main__':
+    args = parse_options()
+    pprint(vars(args))
     print()
 
     # Set the hardware accelerator
-    device = setup_gpu()
+    device = 'cpu' # setup_gpu()
 
     # Set seed for reproducibility
     set_seed(args.seed)
 
     # Get the dataset object
-    dataset = get_dataset(args.dataset, args.dataset_path)
+    dataset = get_dataset(args.dataset_type, args.dataset_path)
 
     # Split the dataset into train, val and test
     train_dataset, val_dataset, test_dataset = split_dataset(dataset)
@@ -194,37 +195,46 @@ def main(args):
     # Initialize the model
     model = get_model(args.model)
     model = model(**vars(args)).to(device)
+    print(model)
 
     # Number of parameters of the model
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f'Number of parameters: {num_params}\n')
 
-    # Setting the WandB parameters
-    config = {
-        **vars(args),
-        'num_params': num_params
-    }
-    run_name = f'{args.model}_{args.dataset}' \
-               f'_epochs-{args.epochs}_num_layers-{args.num_layers}'
+    run_name = f'{args.model}_{args.dataset_type}' \
+                f'_epochs-{args.epochs}_num_layers-{args.num_layers}'
 
-    # Initialize the wandb run
-    wandb.init(project="qgnn-benchmark-exp", config=config, reinit=True,
-               name=run_name)
-    wandb.watch(model)
+    if args.use_wandb:
+        import wandb
+
+        # Setting the WandB parameters
+        config = {
+            **vars(args),
+            'num_params': num_params
+        }
+
+        # Initialize the wandb run
+        wandb.init(project="qgnn-benchmark-exp", config=config, reinit=True,
+                name=run_name)
+        wandb.watch(model)
 
     # Declare the training criterion, optimizer and scheduler
-    criterion = torch.nn.L1Loss(reduction='sum')
+    if isinstance(model, GNN):
+        # l1 loss with reduction sum between pred and batch.y_energy
+        criterion = lambda pred, batch: torch.nn.functional.l1_loss(pred, batch.y_energy, reduction='sum')
+    # if isinstance(model, (QGNN, BP)):
+    #     raise NotImplementedError(f"{type(model)} is not implemented yet.")
+    #     # criterion should involve both, the energies and the rdms
+    else:
+        raise NotImplementedError(f'WTF-Error: Model type {type(model)}')
+
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # Saving the best model instance based on validation MAE
-    best_train_mae, best_val_mae, model_path = float('inf'), float('inf'), ""
-
-    # Calculate the mean and mad of the dataset
-    values = [torch.squeeze(graph.y) for graph in train_loader.dataset]
-    mean = sum(values) / len(values)
-    mad = sum([abs(v - mean) for v in values]) / len(values)
-    mean, mad = mean.to(device), mad.to(device)
+    best_train_mae = np.inf
+    best_val_mae = np.inf
+    model_path = None
 
     # Skip training if the evaluate parameter is set.
     skip_train = args.evaluate is not None
@@ -237,16 +247,20 @@ def main(args):
                 for epoch in t:
                     t.set_description(f'Epoch {epoch}')
                     start = time.time()
-                    epoch_train_mae = train(model, train_loader, criterion, optimizer, device, mean, mad)
-                    epoch_val_mae = evaluate(model, val_loader, criterion, device, mean, mad)
+                    epoch_train_mae = train(model, train_loader, criterion, optimizer, device)
+                    epoch_val_mae = evaluate(model, val_loader, criterion, device)
+                    print(f'Epoch {epoch} | Train MAE: {round(epoch_train_mae, 3)} | '
+                            f'Val MAE: {round(epoch_val_mae, 3)}')
 
-                    wandb.log({'Train MAE': epoch_train_mae,
-                               'Validation MAE': epoch_val_mae})
+                    if args.use_wandb:
+                        wandb.log({'Train MAE': epoch_train_mae,
+                                    'Validation MAE': epoch_val_mae})
 
                     # Best model based on validation MAE
                     if epoch_val_mae < best_val_mae:
                         best_val_mae = epoch_val_mae
-                        wandb.run.summary["best_val_mae"] = best_val_mae
+                        if args.use_wandb:
+                            wandb.run.summary["best_val_mae"] = best_val_mae
                         ckpt = {"state_dict": model.state_dict(),
                                 "optimizer_state_dict": optimizer.state_dict(),
                                 "best_mae": best_val_mae,
@@ -296,12 +310,8 @@ def main(args):
 
     # Perform evaluation on test set
     print('\nBeginning evaluation...')
-    test_mae = evaluate(model, test_loader, criterion, device, mean, mad)
-    wandb.run.summary["test_mae"] = test_mae
+    test_mae = evaluate(model, test_loader, criterion, device)
+    if args.use_wandb:
+        wandb.run.summary["test_mae"] = test_mae
     print(f'\nTest MAE: {round(test_mae, 3)}')
     print('Evaluation finished. Exiting...')
-
-
-if __name__ == '__main__':
-    args = parse_options()
-    main(args)

@@ -33,7 +33,7 @@ class IsingModelDataset(Dataset):
 
 if __name__ == "__main__":
     # Example usage:
-    data_file = os.path.dirname(os.path.abspath(__file__)) + "/../../data/nk_1800_10.pt"
+    data_file = os.path.dirname(os.path.abspath(__file__)) + "/data/nk_1600_12_True.pt"
     # Load the dataset
     dataset = IsingModelDataset.load(data_file)
     # Access data points from the loaded dataset

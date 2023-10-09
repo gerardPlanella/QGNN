@@ -135,7 +135,7 @@ dmypy.json
 
 .netket/
 wandb/
-saved_models/
+output/
 *.pt
 *.pkl
 *.npy

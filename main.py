@@ -59,20 +59,20 @@ def split_dataset(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
     num_train = int(dataset_size * train_ratio)
     num_val = int(dataset_size * val_ratio)
     num_test = dataset_size - num_train - num_val
-    
+
     # Create a list of indices to shuffle the dataset
     indices = np.arange(dataset_size)
     np.random.shuffle(indices)
-    
+
     # Split the dataset using the shuffled indices
     train_indices, remaining_indices = indices[:num_train], indices[num_train:]
     val_indices, test_indices = remaining_indices[:num_val], remaining_indices[num_val:]
-    
+
     # Create train, val, and test subsets using list indexing
     train_dataset = [dataset[i] for i in train_indices]
     val_dataset = [dataset[i] for i in val_indices]
     test_dataset = [dataset[i] for i in test_indices]
-    
+
     return train_dataset, val_dataset, test_dataset
 
 def get_model(model_name):
@@ -92,52 +92,69 @@ def parse_options():
     """Function for parsing command line arguments."""
     parser = argparse.ArgumentParser("Model runner.")
 
+    defaults = {
+        "model": "gnn",
+        "dataset_type": "ising",
+        "dataset_path": "dataset/ising/data/nk_(12,)_True.pt",
+        "seed": 42,
+        "epochs": 30,
+        "batch_size": 4,
+        "learning_rate": 5e-4,
+        "weight_decay": 1e-16,
+        "in_channels": 2,
+        "hidden_channels": 64,
+        "num_layers": 1,
+        "out_channels": 1,
+        "include_dist": False,
+        "use_wandb": True
+    }
+
     # Config matters
     parser.add_argument('--config', type=str, default=None, metavar='S',
-                        help='Config file for parsing arguments. ' 
-                             'Command line arguments will be overriden.')
+                    help='Config file for parsing arguments. '
+                        'Command line arguments will be overriden.')
     parser.add_argument('--write_config_to', type=str, default=None, metavar='S',
-                        help='Writes the current arguments as a json file for '
-                             'config with the specified filename.')
+                    help='Writes the current arguments as a json file for '
+                        'config with the specified filename.')
     parser.add_argument('--evaluate', type=str, default=None, metavar='S',
-                        help='Directly evaluates the model with the model weights'
-                             'of the path specified here. No need to specify the directory.')
-    parser.add_argument('--use_wandb', type=bool, default=False, metavar='S',
-                        help='Whether or not to use wandb for logging.')
+                    help='Directly evaluates the model with the model weights'
+                        'of the path specified here. No need to specify the directory.')
+    parser.add_argument('--use_wandb', type=bool, default=defaults["use_wandb"], metavar='S',
+                    help='Whether or not to use wandb for logging.')
+    parser.add_argument('--wandb_group', type=str, default=None, metavar='S',
+                    help='Wandb group for logging.')
 
     # General Training parameters
-    parser.add_argument('--model', type=str, default='gnn', metavar='S',
-                        help='Available models: qgnn | gnn | bp')
-    parser.add_argument('--dataset_type', type=str, default='ising', metavar='S',
-                        help='Available datasets: ising')
-    parser.add_argument('--dataset_path', type=str, default='dataset/ising/data/nk_1600_12_True.pt', metavar='S',
-                        help='Available datasets: ising')
-    parser.add_argument('--seed', type=int, default=42, metavar='N',
-                        help='Random seed')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                        help='Number of epochs to train')
-    parser.add_argument('--batch_size', type=int, default=12, metavar='N',
-                        help='Batch size for training')
-    parser.add_argument('--learning_rate', type=float, default=5e-4, metavar='N',
-                        help='Learning rate')
-    parser.add_argument('--weight_decay', type=float, default=1e-16, metavar='N',
-                        help='clamp the output of the coords function if get too large')
-    
+    parser.add_argument('--model', type=str, default=defaults["model"], metavar='S',
+                    help='Available models: qgnn | gnn | bp')
+    parser.add_argument('--dataset_type', type=str, default=defaults["dataset_type"], metavar='S',
+                    help='Available datasets: ising')
+    parser.add_argument('--dataset_path', type=str, default=defaults["dataset_path"], metavar='S',
+                    help='Available datasets: ising')
+    parser.add_argument('--seed', type=int, default=defaults["seed"], metavar='N',
+                    help='Random seed')
+    parser.add_argument('--epochs', type=int, default=defaults["epochs"], metavar='N',
+                    help='Number of epochs to train')
+    parser.add_argument('--batch_size', type=int, default=defaults["batch_size"], metavar='N',
+                    help='Batch size for training')
+    parser.add_argument('--learning_rate', type=float, default=defaults["learning_rate"], metavar='N',
+                    help='Learning rate')
+    parser.add_argument('--weight_decay', type=float, default=defaults["weight_decay"], metavar='N',
+                    help='clamp the output of the coords function if get too large')
 
     # Network specific parameters
-    parser.add_argument('--in_channels', type=int, default=2, metavar='N',
-                        help='Input dimension of features')
-    parser.add_argument('--hidden_channels', type=int, default=128, metavar='N',
-                        help='Hidden dimensions')
-    parser.add_argument('--num_layers', type=int, default=7, metavar='N',
-                        help='Number of model layers')
-    parser.add_argument('--out_channels', type=int, default=1, metavar='N',
-                        help='Output dimensions')
+    parser.add_argument('--in_channels', type=int, default=defaults["in_channels"], metavar='N',
+                    help='Input dimension of features')
+    parser.add_argument('--hidden_channels', type=int, default=defaults["hidden_channels"], metavar='N',
+                    help='Hidden dimensions')
+    parser.add_argument('--num_layers', type=int, default=defaults["num_layers"], metavar='N',
+                    help='Number of model layers')
+    parser.add_argument('--out_channels', type=int, default=defaults["out_channels"], metavar='N',
+                    help='Output dimensions')
 
     # Funky experimentation with a lot of abstraction headache
     parser.add_argument('--include_dist', action='store_true',
-                        help='Whether or not to include distance '
-                             'in the message state. (default: False)')
+                        help='Whether or not to include distance in the message state. (default: False)')
 
     args = parser.parse_args()
 
@@ -176,7 +193,7 @@ if __name__ == '__main__':
     print()
 
     # Set the hardware accelerator
-    device = 'cpu' # setup_gpu()
+    device = 'cpu' #setup_gpu()
 
     # Set seed for reproducibility
     set_seed(args.seed)
@@ -201,8 +218,8 @@ if __name__ == '__main__':
     num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f'Number of parameters: {num_params}\n')
 
-    run_name = f'{args.model}_{args.dataset_type}' \
-                f'_epochs-{args.epochs}_num_layers-{args.num_layers}'
+    dataset_name = os.path.basename(args.dataset_path)[:-3]
+    run_name = f'{args.model}_{args.num_layers}_{dataset_name}_{args.seed}'
 
     if args.use_wandb:
         import wandb
@@ -210,13 +227,21 @@ if __name__ == '__main__':
         # Setting the WandB parameters
         config = {
             **vars(args),
-            'num_params': num_params
+            'num_params': num_params,
+            # dataset parameters
+            'num_samples': len(dataset),
+            'dataset_name': dataset_name,
+            'pbc': bool(re.search('True', dataset_name)),  # if dataset_name contains "True"
         }
 
         # Initialize the wandb run
-        wandb.init(project="qgnn-benchmark-exp", config=config, reinit=True,
+        wandb.init(project="qgnn-benchmark-exp", config=config, reinit=True, group=args.wandb_group,
                 name=run_name)
         wandb.watch(model)
+    else:
+        print("Not using wandb. Skipping logging.")
+        train_maes = []
+        valid_maes = []
 
     # Declare the training criterion, optimizer and scheduler
     if isinstance(model, GNN):
@@ -238,6 +263,8 @@ if __name__ == '__main__':
 
     # Skip training if the evaluate parameter is set.
     skip_train = args.evaluate is not None
+    # if isinstance(model, BP):  # BP doesn't need training
+    #     skip_train = True
 
     # If evaluate is set, load the model and evaluate it.
     if not skip_train:
@@ -255,6 +282,9 @@ if __name__ == '__main__':
                     if args.use_wandb:
                         wandb.log({'Train MAE': epoch_train_mae,
                                     'Validation MAE': epoch_val_mae})
+                    else:
+                        train_maes.append(epoch_train_mae)
+                        valid_maes.append(epoch_val_mae)
 
                     # Best model based on validation MAE
                     if epoch_val_mae < best_val_mae:
@@ -276,7 +306,7 @@ if __name__ == '__main__':
                                      f'_seed-{args.seed}.pt'
 
                         # Save the model to the saved_models directory
-                        saved_models_dir = os.path.join(script_dir, 'saved_models')
+                        saved_models_dir = os.path.join(script_dir, 'output/saved_models')
 
                         # If the directory does not exist, create it
                         if not os.path.exists(saved_models_dir):
@@ -293,7 +323,15 @@ if __name__ == '__main__':
             # Training can be safely interrupted with Ctrl+C
             print('Exiting training early because of keyboard interrupt.')
 
-    saved_models_dir = os.path.join(script_dir, 'saved_models')
+    # Plot if not using wandb
+    if not args.use_wandb:
+        import matplotlib.pyplot as plt
+        plt.plot(train_maes, label='Train MAE')
+        plt.plot(valid_maes, label='Validation MAE')
+        plt.legend()
+        plt.show()
+
+    saved_models_dir = os.path.join(script_dir, 'output/saved_models')
     if not skip_train:
         # If the training is skipped, load the model from the saved_models directory
         print('Loading best model...')

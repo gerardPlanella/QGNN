@@ -150,9 +150,7 @@ We develop and evaluate several supervised learning models, including BlochGNN, 
 2. **Training and Evaluating Models**:
     - Execute the main script to run experiments and evaluations. Use the `-h` parameter to display all available options and configurations:
         ```sh
-        python main
-
-.py -h
+        python main.py -h
         ```
 
 ## Results

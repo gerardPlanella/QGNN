@@ -1,0 +1,13 @@
+{
+    "model":"dmrg",
+    "use_gpu": false,
+    "dataset_type": "ising",
+    "dataset_path": "dataset/ising/data/MPS_10x1_N2000_PBCFalse.pt",
+    "seed": 42,
+    "batch_size": 1,
+    "use_wandb": true,
+    "max_E_err": 1e-10,
+    "chi_max": 30,
+    "svd_min": 1e-10,
+    "save_model_outputs": true
+}

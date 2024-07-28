@@ -1,0 +1,15 @@
+{
+    "model":"qbp",
+    "use_gpu": true,
+    "dataset_type": "ising",
+    "seed": 42,
+    "batch_size": 1,
+    "use_wandb": true,
+    "contract_physical_indices": false,
+    "max_iter": 300,
+    "tol": 1e-5,
+    "improvement_rate_threshold": 1e-5,
+    "stable_convergence_required": 2,
+    "show_progress_bar": false,
+    "save_model_outputs": true
+}

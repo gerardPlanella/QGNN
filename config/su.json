@@ -1,0 +1,14 @@
+{
+    "model":"su",
+    "use_gpu": false,
+    "dataset_type": "ising",
+    "dataset_path": "dataset/ising/data/PEPS_5x4_N2000_PBCFalse.pt",
+    "seed": 42,
+    "batch_size": 1,
+    "use_wandb": true,
+    "chi": 30,
+    "bond_dim": 4,
+    "num_iters": 100,
+    "tau": [0.1, 0.01, 0.001],
+    "save_model_outputs": true
+}

@@ -1,0 +1,36 @@
+name: envQGNN
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11.5
+  - pip=23.3.1
+  - pytorch-cuda=11.8
+  - pytorch=2.1.0
+  - torchvision=0.16.0
+  - torchaudio=2.1.0
+  - wandb
+  - quimb=1.6.0
+  - physics-tenpy
+  - scikit-learn
+  - pip:
+    - kahypar
+    - torchviz
+    - ordered_set
+    - tensorly
+    - netket
+    - pytorch-lightning==2.1.0
+    - torch_geometric
+    - tensorboard==2.14.1
+    - tabulate>=0.8.9
+    - tqdm>=4.62.3
+    - llvmlite==0.40.1
+    - numba==0.57.1
+    - pillow>=8.0.1
+    - notebook>=6.4.5
+    - jupyterlab>=3.2.1
+    - matplotlib>=3.4.3
+    - seaborn>=0.11.2
+    - ipywidgets>=7.6.5

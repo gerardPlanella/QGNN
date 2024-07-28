@@ -10,72 +10,72 @@ class GNNLayer(nn.Module):
         **kwargs: Additional keyword arguments
     """
 
-    def __init__(self, hidden_channels, **kwargs):
+    def __init__(self, node_channels, edge_channels, **kwargs):
         super().__init__()
 
         # Message network: phi_m
         self.edge_net = nn.Sequential(
-            nn.Linear(2 * hidden_channels + 1, hidden_channels),
+            nn.Linear(2 * node_channels + edge_channels, node_channels),
             nn.SiLU(),
-            nn.Linear(hidden_channels, hidden_channels),
+            nn.Linear(node_channels, node_channels),
             nn.SiLU()
         )
 
         # Update network: phi_h
         self.node_net = nn.Sequential(
-            nn.Linear(2 * hidden_channels, hidden_channels),
+            nn.Linear(2 * node_channels, node_channels),
             nn.SiLU(),
-            nn.Linear(hidden_channels, hidden_channels)
+            nn.Linear(node_channels, node_channels)
         )
 
-    def forward(self, x, x_edges, edge_index):
+    def forward(self, x_nodes, x_edges, edge_index):
         sender, receiver = edge_index
 
         # Generate the message send -> rec
-        state = torch.cat((x[sender], x[receiver], x_edges.unsqueeze(1)), dim=1)
+        state = torch.cat((x_nodes[sender], x_nodes[receiver], x_edges), dim=1)
         message = self.edge_net(state)
 
         # Manually perform aggregation
-        num_nodes = x.size(0)
+        num_nodes = x_nodes.size(0)
         num_edges = sender.size(0)
         aggr = torch.zeros(num_nodes, message.size(1), dtype=message.dtype, device=message.device)
         aggr.scatter_add_(0, receiver.view(-1, 1).expand(num_edges, message.size(1)), message)
 
         # Pass the new state through the update network alongside x
-        update = self.node_net(torch.cat((x, aggr), dim=1))
+        update = self.node_net(torch.cat((x_nodes, aggr), dim=1))
         return update
 
 
 class GNN(nn.Module):
-    def __init__(self, in_channels, hidden_channels, num_layers, out_channels, include_dist, **kwargs):
+    def __init__(self, in_channels, hidden_channels, edge_channels, num_layers, out_channels, **kwargs):
         super().__init__()
         self.in_channels = in_channels
-        self.hidden_channels = hidden_channels
+        self.node_channels = hidden_channels
+        self.edge_channels = edge_channels
         self.num_layers = num_layers
         self.out_channels = out_channels
-        self.include_dist = include_dist
 
         # Initialization of embedders for the input features
         self.embed_nodes = nn.Sequential(
-            nn.Linear(self.in_channels, self.hidden_channels),
+            nn.Linear(self.in_channels, self.node_channels),
             nn.SiLU(),
-            nn.Linear(self.hidden_channels, self.hidden_channels))
+            nn.Linear(self.node_channels, self.node_channels))
 
         # Initialization of hidden GNN with (optional) LSPE hidden layers
         self.layers = nn.ModuleList([
-            GNNLayer(self.hidden_channels, **kwargs) for _ in range(self.num_layers)
+            GNNLayer(self.node_channels, self.edge_channels, **kwargs) for _ in range(self.num_layers)
         ])
 
         # Readout networks
         self.pre_readout = nn.Sequential(
-            nn.Linear(self.hidden_channels, self.hidden_channels),
+            nn.Linear(self.node_channels, self.node_channels),
             nn.SiLU(),
-            nn.Linear(self.hidden_channels, self.hidden_channels)
+            nn.Linear(self.node_channels, self.node_channels)
         )
         self.readout = nn.Sequential(
-            nn.Linear(self.hidden_channels, self.hidden_channels),
+            nn.Linear(self.node_channels, self.node_channels),
             nn.SiLU(),
-            nn.Linear(self.hidden_channels, self.out_channels)
+            nn.Linear(self.node_channels, self.out_channels)
         )
 
     def forward(self, data):

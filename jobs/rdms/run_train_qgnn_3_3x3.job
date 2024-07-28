@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#SBATCH --job-name=run_qgnn_3
+#SBATCH --time=24:00:00  
+#SBATCH --mem=10G         
+#SBATCH --cpus-per-task=16
+#SBATCH --gpus=1
+#SBATCH -p gpu     # Adjust partition as needed
+#SBATCH --output=/home/gplanella/repos/QGNN/jobs/job_outputs/run_qgnn_3_train_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+# Navigate to the script directory
+cd $HOME/repos/QGNN
+
+# Activate the environment
+source activate envQGNN
+
+# Config filename - change it to each filenames
+# for other corresponding hyper-param settings
+config=qgnn_3_rdm.json
+
+export WANDB_API_KEY=1d47aae57ce71f8749bd0d39e4fb9653ec0c221f
+
+# Running python command
+srun python main.py --config $config --dataset_path output\model_outputs\qbp_PEPS_3x3_N2000_PBCFalse_S42_2024-07-08_20-26-49.pt

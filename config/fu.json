@@ -1,0 +1,13 @@
+{
+    "model":"fu",
+    "use_gpu": false,
+    "dataset_type": "ising",
+    "dataset_path": "dataset/ising/data/PEPS_4400_N200_16.pt",
+    "seed": 42,
+    "batch_size": 16,
+    "use_wandb": true,
+    "chi": 15,
+    "bond_dim": 4,
+    "num_iters": 100,
+    "tau": [0.1, 0.01, 0.001]
+}

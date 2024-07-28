@@ -1,0 +1,14 @@
+{
+    "model":"gnn",
+    "use_gpu": true,
+    "dataset_type": "ising",
+    "dataset_path": "dataset/ising/data/PEPS_4400_N200_16.pt",
+    "seed": 42,
+    "batch_size": 16,
+    "use_wandb": true,
+    "epochs": 30,
+    "learning_rate": 5e-4,
+    "weight_decay": 1e-16,
+    "num_layers": 3,
+    "hidden_channels": 128
+}

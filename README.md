@@ -19,12 +19,6 @@ We develop and evaluate several supervised learning models, including BlochGNN, 
 ├── README.md                      # This readme file
 ├── baselines/                     # Baseline models and scripts
 │   ├── __init__.py
-│   ├── beliefpropagation/         # Belief propagation algorithms and notebooks
-│   │   ├── belief_prop.ipynb
-│   │   ├── factor.py
-│   │   ├── simple_update.py
-│   │   ├── tn_simple_update.ipynb
-│   │   ├── variable_elimination.ipynb
 │   ├── gnn.py                     # GNN baseline implementation
 │   ├── tensorNetworks.py          # Tensor network utilities
 ├── config/                        # Configuration files for various models and experiments
@@ -35,12 +29,8 @@ We develop and evaluate several supervised learning models, including BlochGNN, 
 │   ├── qbp_by_parts.json
 │   ├── qgnn_1.json
 │   ├── qgnn_2.json
-│   ├── qgnn_2_rdm.json
 │   ├── qgnn_3.json
-│   ├── qgnn_3_rdm.json
 │   ├── qgnn_4.json
-│   ├── qgnn_4_aux.json
-│   ├── qgnn_4_it.json
 │   ├── su.json
 │   ├── su_gen.json
 ├── dataset/                       # Dataset generation and loading scripts
@@ -49,49 +39,8 @@ We develop and evaluate several supervised learning models, including BlochGNN, 
 │   │   ├── dataset_generation.ipynb
 │   │   ├── generate_dataset.py
 │   │   ├── isingModel.py
-│   ├── qm9/                       # QM9 dataset utilities
-│   │   ├── qm9.py
 ├── environment_qgnn_gpu.yml       # Conda environment configuration file for GPU
 ├── eval_model_output.py           # Script to evaluate model outputs
-├── jobs/                          # Job scripts for various training and dataset creation tasks
-│   ├── qbp_by_parts/              # Job scripts for QBP by parts experiments
-│   │   ├── run_train_qbp1.job
-│   │   ├── run_train_qbp2.job
-│   │   ├── run_train_qbp3.job
-│   │   ├── run_train_qbp4.job
-│   │   ├── run_train_qbp5.job
-│   │   ├── run_train_qbp6.job
-│   ├── qgnn4/                     # Job scripts for QGNN4 experiments
-│   │   ├── run_train_qgnn_4_10x1.job
-│   │   ├── run_train_qgnn_4_20x1.job
-│   │   ├── run_train_qgnn_4_3x3.job
-│   │   ├── run_train_qgnn_4_5x4.job
-│   ├── qgnn4_it/                  # Job scripts for QGNN4 iterative experiments
-│   │   ├── run_train_qgnn_4_1.job
-│   │   ├── run_train_qgnn_4_2.job
-│   │   ├── run_train_qgnn_4_3.job
-│   │   ├── run_train_qgnn_4_4.job
-│   ├── rdms/                      # Job scripts for RDM-based QGNN experiments
-│   │   ├── run_train_qgnn_2_10x1.job
-│   │   ├── run_train_qgnn_2_20x1.job
-│   │   ├── run_train_qgnn_2_3x3.job
-│   │   ├── run_train_qgnn_2_5x4.job
-│   │   ├── run_train_qgnn_3_10x1.job
-│   │   ├── run_train_qgnn_3_20x1.job
-│   │   ├── run_train_qgnn_3_3x3.job
-│   │   ├── run_train_qgnn_3_5x4.job
-│   ├── run_create_dataset.job     # Job script for creating datasets
-│   ├── run_create_dataset_55.job
-│   ├── run_install_env.job        # Job script for installing environment
-│   ├── run_train_dmrg.job         # Job script for training DMRG
-│   ├── run_train_fu.job           # Job script for training FU
-│   ├── run_train_qbp.job          # Job script for training QBP
-│   ├── run_train_qgnn_1.job       # Job script for training QGNN1
-│   ├── run_train_qgnn_2.job       # Job script for training QGNN2
-│   ├── run_train_qgnn_3.job       # Job script for training QGNN3
-│   ├── run_train_qgnn_4.job       # Job script for training QGNN4
-│   ├── run_train_su.job           # Job script for training SU
-│   ├── run_train_su_gen.job       # Job script for training SU general
 ├── lib/                           # Utility functions and classes
 │   ├── __init__.py
 │   ├── agg.py                     # Aggregation utilities

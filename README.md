@@ -125,7 +125,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgements
 
-We thank our supervisors, Dr. Max Welling and Dr. Vikas Garg, for their guidance and support. Moreover, we also thank Adrian Muller and Floor Eijkelboom for their help during the project. This work was conducted as part of the MSc in Artificial Intelligence program at the University of Amsterdam.
+We thank our supervisors, Dr. Max Welling and Dr. Vikas Garg, for their guidance and support. Adrian Muller also contributed a lot to this project, supporting with their Quantum Mechanics knowledge to build the dataset generation process and functions like the Bloch Vector representation of RDMs. Moreover, we also thank Floor Eijkelboom for their help during the project. This work was conducted as part of the MSc in Artificial Intelligence program at the University of Amsterdam.
 
 ---
 

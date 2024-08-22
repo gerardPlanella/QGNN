@@ -129,4 +129,4 @@ We thank our supervisors, Dr. Max Welling and Dr. Vikas Garg, for their guidance
 
 ---
 
-For more detailed information, please refer to the [full thesis document](AI_MSc_Thesis_Gerard_Planella.pdf).
+For more detailed information, please refer to the [full thesis document](AI_MSc_Thesis.pdf).
